@@ -1,22 +1,38 @@
+from django.contrib.auth import login
+from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import render
+from django.urls import reverse_lazy
+from django.views.generic.edit import FormView
+from .forms import SignUpForm
+from django.contrib import messages
+import logging
+
 
 
 # Create your views here.
+class SignUpView(FormView):
+    template_name = 'accounts/signup.html'      # specifies the name of the template for rendering the signup form.
+    form_class = SignUpForm                     # specifies the form (SignUpForm) used in the template. 
+    redirect_authenticated_user = True          # is set to True to redirect the user once authenticated.
+    success_url = reverse_lazy('home:index')    # specifies the URL to redirect once the user signs up successfully. In this example, it redirects the user to the index on home page.
 
-def index(request):
-    template = 'accounts/index.html'
-    context = {}
-    return render(request, template, context)
+    def form_valid(self, form):
+        # This method is called when valid form data has been POSTed.
+        user = form.save()
+        login(self.request, user)
+        return super().form_valid(form)
+    
 
-def login(request):
-    template = 'accounts/login.html'
-    context = {}
-    return render(request, template, context)
+class LogInView(LoginView):
+    template_name = 'accounts/login.html'  
+    LoginView.form_class.template_name = 'accounts/form.html'
 
-def logout(request):
-    template = 'accounts/logout.html'
-    context = {}
-    return render(request, template, context)
+    def get_success_url(self):
+        return reverse_lazy('home:index')
+
+class LogOutView(LogoutView):
+    next_page = reverse_lazy('accounts:login')
+
 
 def password_change(request):
     template = 'accounts/password_change.html'
